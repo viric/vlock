@@ -103,9 +103,19 @@ static char *get_console_name(int n)
  * file descriptor. */
 static int activate_console(int consfd, int vtno)
 {
-  int c = ioctl(consfd, VT_ACTIVATE, vtno);
+  int c;
+  do {
+    c = ioctl(consfd, VT_ACTIVATE, vtno);
+  } while(c != 0 && errno == EINTR);
 
-  return c < 0 ? c : ioctl(consfd, VT_WAITACTIVE, vtno);
+  if (c < 0)
+      return c;
+
+  do {
+    c = ioctl(consfd, VT_WAITACTIVE, vtno);
+  } while(c != 0 && errno == EINTR);
+
+  return c;
 }
 
 struct new_console_context {
